@@ -37,7 +37,7 @@ var channels = {},broadcastedlessson = {};
 var broadcastersessionid;
 io.sockets.on('connection', function (socket) {
 	console.log('A user connected');
-	
+	socket.setMaxListeners(0); 
     var initiatorChannel = '';var initiatorBroadcaster = '';
     if (!io.isConnected) {
         io.isConnected = true;
@@ -51,6 +51,7 @@ io.sockets.on('connection', function (socket) {
 
 		if (initiatorBroadcaster) {
 			delete broadcastedlessson[initiatorBroadcaster];
+			socket.broadcast.to(initiatorChannel).emit('broadcasterDisconnect');
 			console.log('is boradcaster deleted ' + !broadcastedlessson[initiatorBroadcaster])
         }
     });
@@ -58,6 +59,12 @@ io.sockets.on('connection', function (socket) {
 	socket.on('isalreadybroadcasting', function (lessonid) {
 		console.log('isalreadybroadcasting : ' + !!broadcastedlessson[lessonid])
 		 socket.emit('isalreadybroadcasting', !!broadcastedlessson[lessonid]);
+
+    });
+
+	socket.on('isbroadcasterconnected', function (lessonid) {
+		console.log('isbroadcasterconnected : ' + !!broadcastedlessson[lessonid])
+		 socket.emit('isbroadcasterconnected', !!broadcastedlessson[lessonid]);
 
     });
 
@@ -70,7 +77,7 @@ io.sockets.on('connection', function (socket) {
     });
 
     socket.on('new-channel', function (data) {
-		
+		socket.setMaxListeners(0); 
         if (!channels[data.channel]) {
 			console.log('initiatorChannel');
             initiatorChannel = data.channel;
@@ -105,6 +112,7 @@ function onNewNamespace(channel, sender) {
         });
         
         socket.on('disconnect', function() {
+			
             if(username) {
                 socket.broadcast.emit('user-left', username);
                 username = null;
@@ -115,7 +123,7 @@ function onNewNamespace(channel, sender) {
 		   delete broadcastedlessson[lessonid];
 		   console.log('endbroadcasting : ' + !broadcastedlessson[lessonid])
            socket.broadcast.emit('endbroadcasting', !broadcastedlessson[lessonid]);
-    });
+		});
 
     });
 }
